@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basketball GM Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        body.dark-mode {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1d35 100%);
+        }
+        
+        body.light-mode {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            color: #1e293b;
+        }
+        
+        body.light-mode .container {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        body.light-mode h1,
+        body.light-mode h2,
+        body.light-mode h3,
+        body.light-mode .season-info,
+        body.light-mode th,
+        body.light-mode td,
+        body.light-mode .draft-prospect,
+        body.light-mode .attribute-category {
+            color: #1e293b;
+        }
+        
+        body.light-mode table {
+            border-color: rgba(30, 41, 59, 0.2);
+        }
+        
+        body.light-mode th,
+        body.light-mode td {
+            border-color: rgba(30, 41, 59, 0.1);
+        }
+        
+        body.light-mode .content-area {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .season-info {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .menu-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        .menu-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+        
+        .content-area {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 400px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        th {
+            background: rgba(255,255,255,0.1);
+            font-weight: bold;
+        }
+        
+        tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .highlight {
+            background: rgba(255, 215, 0, 0.2);
+        }
+        
+        .draft-prospect {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .draft-prospect:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .draft-btn {
+            background: #28a745;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        
+        .draft-btn:hover {
+            background: #218838;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: #1e3c72;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        .close-modal {
+            margin-top: 20px;
+            background: #dc3545;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        
+        .player-link {
+            color: #4dabf7;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .player-link:hover {
+            color: #74c0fc;
+        }
+        
+        .attribute-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .attribute-category {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .attribute-category h4 {
+            margin-bottom: 10px;
+            color: #74c0fc;
+        }
+        
+        .attribute-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 4px;
+        }
+        
+        .attribute-bar {
+            width: 60%;
+            height: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .attribute-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+        
+        .settings-section {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+        }
+        
+        .setting-label {
+            font-weight: bold;
+        }
+        
+        .setting-description {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .toggle-switch.active {
+            background: #667eea;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(30px);
+        }
+        
+        select {
+            background: rgba(255,255,255,0.1);
+            color: inherit;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        
+        body.light-mode select {
+            background: rgba(30, 41, 59, 0.1);
+            border-color: rgba(30, 41, 59, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="LOGO.png" alt="Basketball GM Logo" style="max-width: 200px; height: auto; margin-bottom: 10px;">
+        </div>
+        <h1>🏀 Basketball GM Simulator</h1>
+        <div class="season-info">Season <span id="seasonNum">1</span> | <span id="teamName">Los Angeles Lakers</span></div>
+        
+        <div class="menu">
+            <button class="menu-btn" onclick="viewRoster()">📋 View Roster</button>
+            <button class="menu-btn" onclick="simulateSeason()">⏩ Simulate Season</button>
+            <button class="menu-btn" onclick="viewStandings()">🏆 Standings</button>
+            <button class="menu-btn" onclick="advanceOffseason()">📅 Offseason</button>
+            <button class="menu-btn" onclick="openSettings()">⚙️ Settings</button>
+        </div>
+        
+        <div class="content-area" id="contentArea">
+            <h2>Welcome to Basketball GM!</h2>
+            <p style="margin-top: 20px;">You are the General Manager of the <strong>Los Angeles Lakers</strong>.</p>
+            <p style="margin-top: 10px;">Build your team, simulate seasons, draft players, and lead your team to glory!</p>
+            <p style="margin-top: 20px; opacity: 0.8;">Click any button above to get started.</p>
+        </div>
+    </div>
+    
+    <div class="modal" id="draftModal">
+        <div class="modal-content">
+            <h2>🎉 Draft Complete!</h2>
+            <p style="margin-top: 20px;" id="draftMessage"></p>
+            <button class="close-modal" onclick="closeDraftModal()">Close</button>
+        </div>
+    </div>
+    
+    <div class="modal" id="playerModal">
+        <div class="modal-content" style="max-width: 700px; max-height: 80vh; overflow-y: auto;">
+            <div id="playerProfile"></div>
+            <button class="close-modal" onclick="closePlayerModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        class Player {
+            constructor(name, age, position, overall, potential, contract, contractType = "standard") {
+                this.name = name;
+                this.age = age;
+                this.position = position;
+                this.overall = overall;
+                this.potential = potential;
+                this.contract = contract;
+                this.contractType = contractType; // "standard" or "two-way"
+                this.stats = { ppg: 0, rpg: 0, apg: 0 };
+                this.attributes = this.generateAttributes();
+                this.bio = this.generateBio();
+            }
+            
+            generateBio() {
+                const hometowns = [
+                    "Los Angeles, CA", "New York, NY", "Chicago, IL", "Houston, TX", "Phoenix, AZ",
+                    "Philadelphia, PA", "San Antonio, TX", "San Diego, CA", "Dallas, TX", "Detroit, MI",
+                    "Miami, FL", "Atlanta, GA", "Boston, MA", "Seattle, WA", "Denver, CO",
+                    "Baltimore, MD", "Oakland, CA", "Portland, OR", "Memphis, TN", "Las Vegas, NV",
+                    "Milwaukee, WI", "Charlotte, NC", "Indianapolis, IN", "Columbus, OH", "Austin, TX"
+                ];
+                
+                const colleges = [
+                    "Duke", "Kentucky", "North Carolina", "Kansas", "UCLA", "Villanova",
+                    "Michigan State", "Arizona", "Louisville", "Syracuse", "Florida",
+                    "Gonzaga", "Michigan", "Ohio State", "Texas", "UConn", "Maryland",
+                    "Georgetown", "Indiana", "Wisconsin", "Memphis", "Marquette",
+                    "Virginia", "Stanford", "Wake Forest", "International (Did not attend college)"
+                ];
+                
+                const currentYear = 2025;
+                const yearsInLeague = this.age - 19;
+                const draftYear = currentYear - yearsInLeague;
+                const draftRound = Math.random() < 0.6 ? 1 : 2; // 60% first round
+                const draftPick = draftRound === 1 ? Math.floor(Math.random() * 30) + 1 : Math.floor(Math.random() * 30) + 31;
+                
+                // Generate birthdate based on age
+                const birthYear = currentYear - this.age;
+                const birthMonth = Math.floor(Math.random() * 12) + 1;
+                const birthDay = Math.floor(Math.random() * 28) + 1;
+                const birthdate = `${birthMonth}/${birthDay}/${birthYear}`;
+                
+                // Height based on position
+                let heightInches;
+                switch(this.position) {
+                    case "PG":
+                        heightInches = 72 + Math.floor(Math.random() * 6); // 6'0" to 6'5"
+                        break;
+                    case "SG":
+                        heightInches = 74 + Math.floor(Math.random() * 6); // 6'2" to 6'7"
+                        break;
+                    case "SF":
+                        heightInches = 76 + Math.floor(Math.random() * 6); // 6'4" to 6'9"
+                        break;
+                    case "PF":
+                        heightInches = 78 + Math.floor(Math.random() * 6); // 6'6" to 6'11"
+                        break;
+                    case "C":
+                        heightInches = 80 + Math.floor(Math.random() * 8); // 6'8" to 7'3"
+                        break;
+                    default:
+                        heightInches = 75;
+                }
+                
+                const feet = Math.floor(heightInches / 12);
+                const inches = heightInches % 12;
+                const height = `${feet}'${inches}"`;
+                
+                // Weight based on height and position
+                const baseWeight = heightInches * 2.5 + 50;
+                const weight = Math.floor(baseWeight + Math.random() * 40 - 20);
+                
+                // Draft team
+                const draftTeams = [
+                    "Los Angeles Legends", "Boston Blaze", "Miami Thunder", "Golden State Dragons",
+                    "Chicago Storm", "Dallas Knights", "Phoenix Scorpions", "Milwaukee Titans",
+                    "Philadelphia Guardians", "Houston Rockets", "Brooklyn Monarchs", "Toronto Raptors",
+                    "Denver Peaks", "Portland Pioneers", "Atlanta Wings", "New Orleans Fury",
+                    "San Antonio Silver", "Memphis Grizzlies", "Utah Mountain Lions", "Sacramento Royals",
+                    "Cleveland Lightning", "Minnesota Wolves", "Indiana Flyers", "New York Empire",
+                    "Oklahoma City Thunder", "Detroit Motors", "Charlotte Hornets", "Washington Capitals",
+                    "Orlando Magic", "Las Vegas Aces"
+                ];
+                
+                return {
+                    hometown: hometowns[Math.floor(Math.random() * hometowns.length)],
+                    shoots: Math.random() < 0.85 ? "Right" : "Left", // 85% right-handed
+                    height: height,
+                    weight: weight,
+                    birthdate: birthdate,
+                    college: colleges[Math.floor(Math.random() * colleges.length)],
+                    draftYear: draftYear,
+                    draftTeam: draftTeams[Math.floor(Math.random() * draftTeams.length)],
+                    draftRound: draftRound,
+                    draftPick: draftPick
+                };
+            }
+            
+            generateAttributes() {
+                const base = this.overall;
+                const variance = 15;
+                
+                return {
+                    // Offense
+                    insideScoring: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    midRange: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    threePoint: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    freeThrow: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    passing: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    handling: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    
+                    // Defense
+                    perimeterDefense: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    interiorDefense: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    stealing: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    blocking: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    
+                    // Physical
+                    speed: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    acceleration: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    strength: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    vertical: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    stamina: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    
+                    // Rebounding
+                    offensiveRebounding: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2))),
+                    defensiveRebounding: Math.max(25, Math.min(99, base + Math.floor(Math.random() * variance - variance/2)))
+                };
+            }
+            
+            simulateStats() {
+                const base = this.overall / 100;
+                this.stats.ppg = (Math.random() * 25 * base + 5).toFixed(1);
+                this.stats.rpg = (Math.random() * 10 * base + 2).toFixed(1);
+                this.stats.apg = (Math.random() * 9 * base + 1).toFixed(1);
+            }
+            
+            develop() {
+                if (this.age < 27 && this.overall < this.potential) {
+                    const growth = Math.floor(Math.random() * 4);
+                    this.overall = Math.min(this.overall + growth, this.potential);
+                } else if (this.age > 30) {
+                    const decline = Math.floor(Math.random() * 3);
+                    this.overall = Math.max(this.overall - decline, 40);
+                }
+                this.age++;
+            }
+        }
+        
+        class Team {
+            constructor(name, city) {
+                this.name = name;
+                this.city = city;
+                this.roster = [];
+                this.wins = 0;
+                this.losses = 0;
+            }
+            
+            getTeamRating() {
+                if (this.roster.length === 0) return 0;
+                return this.roster.reduce((sum, p) => sum + p.overall, 0) / this.roster.length;
+            }
+        }
+        
+        class Game {
+            constructor() {
+                this.teams = [];
+                this.playerTeam = null;
+                this.season = 1;
+                this.draftClass = [];
+                this.setupLeague();
+            }
+            
+            generatePlayer(minAge = 19, maxAge = 35) {
+                const positions = ["PG", "SG", "SF", "PF", "C"];
+                const firstNames = ["James", "Kevin", "Steph", "Luka", "Giannis", "Joel", "Nikola", "Damian", "Kawhi", "Anthony", "Jayson", "Devin", "Trae", "Donovan", "Zion"];
+                const lastNames = ["Johnson", "Williams", "Davis", "Brown", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "Smith", "Jones", "Miller", "Martinez", "Garcia"];
+                
+                const name = `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
+                const age = Math.floor(Math.random() * (maxAge - minAge + 1)) + minAge;
+                const position = positions[Math.floor(Math.random() * positions.length)];
+                
+                let overall, potential;
+                if (age < 23) {
+                    overall = Math.floor(Math.random() * 21) + 55;
+                    potential = Math.floor(Math.random() * (96 - overall)) + overall;
+                } else {
+                    overall = Math.floor(Math.random() * 31) + 60;
+                    potential = Math.min(overall + Math.floor(Math.random() * 6), 99);
+                }
+                
+                const contract = overall * 100000 + Math.floor(Math.random() * 2000000 - 1000000);
+                
+                return new Player(name, age, position, overall, potential, contract);
+            }
+            
+            setupLeague() {
+                const teamData = [
+                    ["Los Angeles", "Legends"], ["Boston", "Blaze"], ["Miami", "Thunder"],
+                    ["Golden State", "Dragons"], ["Chicago", "Storm"], ["Dallas", "Knights"],
+                    ["Phoenix", "Scorpions"], ["Milwaukee", "Titans"], ["Philadelphia", "Guardians"],
+                    ["Houston", "Rockets"], ["Brooklyn", "Monarchs"], ["Toronto", "Raptors"],
+                    ["Denver", "Peaks"], ["Portland", "Pioneers"], ["Atlanta", "Wings"],
+                    ["New Orleans", "Fury"], ["San Antonio", "Silver"], ["Memphis", "Grizzlies"],
+                    ["Utah", "Mountain Lions"], ["Sacramento", "Royals"], ["Cleveland", "Lightning"],
+                    ["Minnesota", "Wolves"], ["Indiana", "Flyers"], ["New York", "Empire"],
+                    ["Oklahoma City", "Thunder"], ["Detroit", "Motors"], ["Charlotte", "Hornets"],
+                    ["Washington", "Capitals"], ["Orlando", "Magic"], ["Las Vegas", "Aces"]
+                ];
+                
+                for (const [city, name] of teamData) {
+                    const team = new Team(name, city);
+                    // Add 15 standard contract players
+                    for (let i = 0; i < 15; i++) {
+                        team.roster.push(this.generatePlayer());
+                    }
+                    // Add 2 two-way contract players (lower overall)
+                    for (let i = 0; i < 2; i++) {
+                        const twoWayPlayer = this.generatePlayer(19, 24);
+                        twoWayPlayer.overall = Math.floor(Math.random() * 16) + 50; // 50-65 overall
+                        twoWayPlayer.contractType = "two-way";
+                        twoWayPlayer.contract = 500000; // Two-way contracts are ~$500k
+                        team.roster.push(twoWayPlayer);
+                    }
+                    this.teams.push(team);
+                }
+                
+                this.playerTeam = this.teams[0];
+            }
+            
+            simulateGame(team1, team2) {
+                const rating1 = team1.getTeamRating();
+                const rating2 = team2.getTeamRating();
+                const chance1 = rating1 / (rating1 + rating2);
+                return Math.random() < chance1 ? team1 : team2;
+            }
+            
+            simulateSeason() {
+                this.teams.forEach(team => {
+                    team.wins = 0;
+                    team.losses = 0;
+                });
+                
+                for (let game = 0; game < 41; game++) {
+                    for (let i = 0; i < this.teams.length; i++) {
+                        for (let j = i + 1; j < this.teams.length; j++) {
+                            const winner = this.simulateGame(this.teams[i], this.teams[j]);
+                            const loser = winner === this.teams[i] ? this.teams[j] : this.teams[i];
+                            winner.wins++;
+                            loser.losses++;
+                        }
+                    }
+                }
+                
+                this.teams.forEach(team => {
+                    team.roster.forEach(player => player.simulateStats());
+                });
+            }
+            
+            generateDraftClass() {
+                this.draftClass = [];
+                for (let i = 0; i < 30; i++) {
+                    const player = this.generatePlayer(19, 22);
+                    player.contract = 5000000;
+                    this.draftClass.push(player);
+                }
+                this.draftClass.sort((a, b) => b.potential - a.potential);
+            }
+        }
+        
+        let game = new Game();
+        let settings = {
+            theme: 'default', // 'default', 'dark', 'light'
+            animations: true,
+            soundEffects: false,
+            autoSave: true
+        };
+        
+        // Load settings from localStorage
+        function loadSettings() {
+            const saved = localStorage.getItem('basketballGMSettings');
+            if (saved) {
+                settings = JSON.parse(saved);
+                applySettings();
+            }
+        }
+        
+        function saveSettings() {
+            localStorage.setItem('basketballGMSettings', JSON.stringify(settings));
+        }
+        
+        function applySettings() {
+            // Apply theme
+            document.body.className = '';
+            if (settings.theme === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else if (settings.theme === 'light') {
+                document.body.classList.add('light-mode');
+            }
+        }
+        
+        loadSettings();
+        
+        function viewRoster() {
+            const content = document.getElementById('contentArea');
+            let html = '<h2>📋 ' + game.playerTeam.city + ' ' + game.playerTeam.name + ' Roster</h2>';
+            
+            const standardPlayers = game.playerTeam.roster.filter(p => p.contractType === "standard");
+            const twoWayPlayers = game.playerTeam.roster.filter(p => p.contractType === "two-way");
+            
+            html += '<h3>Standard Roster (' + standardPlayers.length + '/15)</h3>';
+            html += '<table><thead><tr><th>Name</th><th>Pos</th><th>Age</th><th>OVR</th><th>POT</th><th>Contract</th></tr></thead><tbody>';
+            
+            const sortedStandard = [...standardPlayers].sort((a, b) => b.overall - a.overall);
+            sortedStandard.forEach(player => {
+                html += `<tr>
+                    <td>${player.name}</td>
+                    <td>${player.position}</td>
+                    <td>${player.age}</td>
+                    <td>${player.overall}</td>
+                    <td>${player.potential}</td>
+                    <td>${(player.contract / 1000000).toFixed(1)}M</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            
+            html += '<h3 style="margin-top: 30px;">Two-Way Contracts (' + twoWayPlayers.length + '/2)</h3>';
+            html += '<table><thead><tr><th>Name</th><th>Pos</th><th>Age</th><th>OVR</th><th>POT</th><th>Contract</th></tr></thead><tbody>';
+            
+            const sortedTwoWay = [...twoWayPlayers].sort((a, b) => b.overall - a.overall);
+            sortedTwoWay.forEach(player => {
+                html += `<tr>
+                    <td>${player.name}</td>
+                    <td>${player.position}</td>
+                    <td>${player.age}</td>
+                    <td>${player.overall}</td>
+                    <td>${player.potential}</td>
+                    <td>${(player.contract / 1000000).toFixed(2)}M (Two-Way)</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            html += `<p style="margin-top: 20px;">Team Rating: <strong>${game.playerTeam.getTeamRating().toFixed(1)}</strong> | Total Roster: <strong>${game.playerTeam.roster.length}/17</strong></p>`;
+            content.innerHTML = html;
+        }
+        
+        function simulateSeason() {
+            game.simulateSeason();
+            const content = document.getElementById('contentArea');
+            let html = '<h2>⏩ Season ' + game.season + ' Complete!</h2>';
+            html += '<h3 style="margin-top: 20px;">Final Standings</h3>';
+            html += '<table><thead><tr><th>Team</th><th>Wins</th><th>Losses</th><th>Rating</th></tr></thead><tbody>';
+            
+            const sorted = [...game.teams].sort((a, b) => b.wins - a.wins);
+            sorted.forEach(team => {
+                const isPlayer = team === game.playerTeam;
+                html += `<tr ${isPlayer ? 'class="highlight"' : ''}>
+                    <td>${team.city} ${team.name} ${isPlayer ? '(YOU)' : ''}</td>
+                    <td>${team.wins}</td>
+                    <td>${team.losses}</td>
+                    <td>${team.getTeamRating().toFixed(1)}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+        
+        function viewStandings() {
+            const content = document.getElementById('contentArea');
+            let html = '<h2>🏆 Season ' + game.season + ' Standings</h2>';
+            html += '<table><thead><tr><th>Rank</th><th>Team</th><th>Wins</th><th>Losses</th><th>Rating</th></tr></thead><tbody>';
+            
+            const sorted = [...game.teams].sort((a, b) => b.wins - a.wins);
+            sorted.forEach((team, idx) => {
+                const isPlayer = team === game.playerTeam;
+                html += `<tr ${isPlayer ? 'class="highlight"' : ''}>
+                    <td>${idx + 1}</td>
+                    <td>${team.city} ${team.name} ${isPlayer ? '(YOU)' : ''}</td>
+                    <td>${team.wins}</td>
+                    <td>${team.losses}</td>
+                    <td>${team.getTeamRating().toFixed(1)}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+        
+        function advanceOffseason() {
+            game.teams.forEach(team => {
+                team.roster.forEach(player => player.develop());
+            });
+            
+            game.generateDraftClass();
+            showDraft();
+        }
+        
+        function showDraft() {
+            const content = document.getElementById('contentArea');
+            const sorted = [...game.teams].sort((a, b) => a.wins - b.wins);
+            const playerPick = sorted.indexOf(game.playerTeam) + 1;
+            
+            let html = `<h2>🎯 Draft - Season ${game.season}</h2>`;
+            html += `<p style="margin: 20px 0;">You have the #${playerPick} pick!</p>`;
+            html += '<h3>Top 10 Prospects:</h3>';
+            
+            game.draftClass.slice(0, 10).forEach((player, idx) => {
+                html += `<div class="draft-prospect">
+                    <div>
+                        <strong>${idx + 1}. ${player.name}</strong> - ${player.position}
+                        <br><small>Age: ${player.age} | OVR: ${player.overall} | POT: ${player.potential}</small>
+                    </div>
+                    <button class="draft-btn" onclick="draftPlayer(${idx})">Draft</button>
+                </div>`;
+            });
+            
+            content.innerHTML = html;
+        }
+        
+        function draftPlayer(idx) {
+            const player = game.draftClass[idx];
+            game.playerTeam.roster.push(player);
+            
+            const sorted = [...game.teams].sort((a, b) => a.wins - b.wins);
+            sorted.forEach((team, teamIdx) => {
+                if (team !== game.playerTeam && game.draftClass.length > 0) {
+                    const pick = game.draftClass[Math.floor(Math.random() * Math.min(5, game.draftClass.length))];
+                    team.roster.push(pick);
+                    game.draftClass = game.draftClass.filter(p => p !== pick);
+                }
+            });
+            
+            game.season++;
+            document.getElementById('seasonNum').textContent = game.season;
+            document.getElementById('draftMessage').textContent = `You drafted ${player.name}!`;
+            document.getElementById('draftModal').style.display = 'flex';
+        }
+        
+        function closeDraftModal() {
+            document.getElementById('draftModal').style.display = 'none';
+            viewRoster();
+        }
+        
+        function viewPlayerProfile(playerName) {
+            const player = game.playerTeam.roster.find(p => p.name === playerName);
+            if (!player) return;
+            
+            const attr = player.attributes;
+            const getAttributeColor = (value) => {
+                if (value >= 80) return '#4caf50';
+                if (value >= 70) return '#8bc34a';
+                if (value >= 60) return '#ffc107';
+                if (value >= 50) return '#ff9800';
+                return '#f44336';
+            };
+            
+            let html = `
+                <h2>${player.name}</h2>
+                <div style="text-align: center; margin: 20px 0;">
+                    <div style="display: inline-block; margin: 0 20px;">
+                        <div style="font-size: 36px; font-weight: bold;">${player.overall}</div>
+                        <div style="opacity: 0.8;">Overall</div>
+                    </div>
+                    <div style="display: inline-block; margin: 0 20px;">
+                        <div style="font-size: 36px; font-weight: bold;">${player.potential}</div>
+                        <div style="opacity: 0.8;">Potential</div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin: 15px 0;">
+                    <strong>${player.position}</strong> | Age: ${player.age} | ${(player.contract / 1000000).toFixed(1)}M ${player.contractType === 'two-way' ? '(Two-Way)' : ''}
+                </div>
+                
+                <div class="attribute-grid">
+                    <div class="attribute-category">
+                        <h4>🏀 Offense</h4>
+                        <div class="attribute-item">
+                            <span>Inside Scoring</span>
+                            <span style="color: ${getAttributeColor(attr.insideScoring)}">${attr.insideScoring}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Mid Range</span>
+                            <span style="color: ${getAttributeColor(attr.midRange)}">${attr.midRange}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Three Point</span>
+                            <span style="color: ${getAttributeColor(attr.threePoint)}">${attr.threePoint}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Free Throw</span>
+                            <span style="color: ${getAttributeColor(attr.freeThrow)}">${attr.freeThrow}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Passing</span>
+                            <span style="color: ${getAttributeColor(attr.passing)}">${attr.passing}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Ball Handling</span>
+                            <span style="color: ${getAttributeColor(attr.handling)}">${attr.handling}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="attribute-category">
+                        <h4>🛡️ Defense</h4>
+                        <div class="attribute-item">
+                            <span>Perimeter Defense</span>
+                            <span style="color: ${getAttributeColor(attr.perimeterDefense)}">${attr.perimeterDefense}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Interior Defense</span>
+                            <span style="color: ${getAttributeColor(attr.interiorDefense)}">${attr.interiorDefense}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Stealing</span>
+                            <span style="color: ${getAttributeColor(attr.stealing)}">${attr.stealing}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Blocking</span>
+                            <span style="color: ${getAttributeColor(attr.blocking)}">${attr.blocking}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Off. Rebounding</span>
+                            <span style="color: ${getAttributeColor(attr.offensiveRebounding)}">${attr.offensiveRebounding}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Def. Rebounding</span>
+                            <span style="color: ${getAttributeColor(attr.defensiveRebounding)}">${attr.defensiveRebounding}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="attribute-category">
+                        <h4>💪 Physical</h4>
+                        <div class="attribute-item">
+                            <span>Speed</span>
+                            <span style="color: ${getAttributeColor(attr.speed)}">${attr.speed}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Acceleration</span>
+                            <span style="color: ${getAttributeColor(attr.acceleration)}">${attr.acceleration}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Strength</span>
+                            <span style="color: ${getAttributeColor(attr.strength)}">${attr.strength}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Vertical</span>
+                            <span style="color: ${getAttributeColor(attr.vertical)}">${attr.vertical}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Stamina</span>
+                            <span style="color: ${getAttributeColor(attr.stamina)}">${attr.stamina}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="attribute-category">
+                        <h4>📊 Season Stats</h4>
+                        <div class="attribute-item">
+                            <span>Points Per Game</span>
+                            <span style="color: #4dabf7">${player.stats.ppg}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Rebounds Per Game</span>
+                            <span style="color: #4dabf7">${player.stats.rpg}</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span>Assists Per Game</span>
+                            <span style="color: #4dabf7">${player.stats.apg}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('playerProfile').innerHTML = html;
+            document.getElementById('playerModal').style.display = 'flex';
+        }
+        
+        function closePlayerModal() {
+            document.getElementById('playerModal').style.display = 'none';
+        }
+        
+        function openSettings() {
+            const content = document.getElementById('contentArea');
+            let html = `
+                <h2>⚙️ Settings</h2>
+                
+                <div class="settings-section">
+                    <h3>🎨 Appearance</h3>
+                    
+                    <div class="setting-item">
+                        <div>
+                            <div class="setting-label">Theme</div>
+                            <div class="setting-description">Choose your preferred color scheme</div>
+                        </div>
+                        <select id="themeSelect" onchange="changeTheme(this.value)">
+                            <option value="default" ${settings.theme === 'default' ? 'selected' : ''}>Default Blue</option>
+                            <option value="dark" ${settings.theme === 'dark' ? 'selected' : ''}>Dark Mode</option>
+                            <option value="light" ${settings.theme === 'light' ? 'selected' : ''}>Light Mode</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div>
+                            <div class="setting-label">Animations</div>
+                            <div class="setting-description">Enable smooth transitions and effects</div>
+                        </div>
+                        <div class="toggle-switch ${settings.animations ? 'active' : ''}" onclick="toggleSetting('animations')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>🎮 Gameplay</h3>
+                    
+                    <div class="setting-item">
+                        <div>
+                            <div class="setting-label">Auto Save</div>
+                            <div class="setting-description">Automatically save your progress</div>
+                        </div>
+                        <div class="toggle-switch ${settings.autoSave ? 'active' : ''}" onclick="toggleSetting('autoSave')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div>
+                            <div class="setting-label">Sound Effects</div>
+                            <div class="setting-description">Play sounds for actions (Coming Soon)</div>
+                        </div>
+                        <div class="toggle-switch ${settings.soundEffects ? 'active' : ''}" onclick="toggleSetting('soundEffects')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>ℹ️ About</h3>
+                    <p style="margin: 10px 0; opacity: 0.8;">Basketball GM Simulator v1.0</p>
+                    <p style="margin: 10px 0; opacity: 0.8;">Manage your team, draft players, and build a dynasty!</p>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+        }
+        
+        function changeTheme(theme) {
+            settings.theme = theme;
+            applySettings();
+            saveSettings();
+        }
+        
+        function toggleSetting(settingName) {
+            settings[settingName] = !settings[settingName];
+            saveSettings();
+            openSettings(); // Refresh the settings view
+        }
+    </script>
+</body>
+</html>
